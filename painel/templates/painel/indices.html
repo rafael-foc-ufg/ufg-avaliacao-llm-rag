@@ -1,0 +1,63 @@
+{% extends "painel/base.html" %}
+{% load apresentacao %}
+
+{% block titulo %}Índices{% endblock %}
+
+{% block cabecalho %}{% if construindo %}<meta http-equiv="refresh" content="10">{% endif %}{% endblock %}
+
+{% block conteudo %}
+<div class="cabecalho">
+  <h1>Índices</h1>
+  <a href="{% url 'novo_indice' %}" role="button">Novo índice</a>
+</div>
+<p class="resumo">Ativar muda o índice padrão. Os demais continuam guardados.{% if construindo %} Esta página se atualiza sozinha durante a construção.{% endif %}</p>
+<section class="bloco">
+  {% if indices %}
+  <div class="overflow-auto rolagem">
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Situação</th>
+          <th class="numero">Chunk</th>
+          <th class="numero">Sobreposição</th>
+          <th>Embedding</th>
+          <th class="numero">Chunks</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for indice in indices %}
+        <tr>
+          <td><a href="{% url 'indice' indice.nome %}">{{ indice.nome }}</a></td>
+          <td>
+            <span class="situacao {{ indice.status }}">{{ indice.get_status_display }}</span>
+            {% if indice.status == "construindo" and indice.progresso %}
+            <span class="previa">Fonte {{ indice.progresso.etapa }}, {{ indice.progresso.fonte|nome_fonte }}: {{ indice.progresso.percentual }}% ({{ indice.progresso.feitos|floatformat:"0g" }} de {{ indice.progresso.total|floatformat:"0g" }} chunks)</span>
+            <span class="previa">{{ indice.progresso.documento|truncatechars:70 }}</span>
+            {% endif %}
+          </td>
+          <td class="numero">{{ indice.tamanho|floatformat:"0g" }}</td>
+          <td class="numero">{{ indice.overlap|floatformat:"0g" }}</td>
+          <td>{{ indice.embedding }}</td>
+          <td class="numero">{{ indice.total_chunks|floatformat:"0g" }}</td>
+          <td>
+            {% if indice.nome == indice_ativo %}
+            <span class="ativo">Ativo</span>
+            {% elif indice.status == "pronto" %}
+            <form method="post" action="{% url 'ativar_indice' indice.nome %}">
+              {% csrf_token %}
+              <button type="submit" class="secondary outline">Ativar</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="nota">Nenhum índice criado. <a href="{% url 'novo_indice' %}">Crie o primeiro índice.</a></p>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "painel/base.html" %}
+
+{% block titulo %}{% if object %}Questão {{ object.codigo }}{% else %}Nova questão{% endif %}{% endblock %}
+
+{% block conteudo %}
+<p><a href="{% url 'gabarito' %}">Voltar ao gabarito</a></p>
+<div class="cabecalho">
+  <h1>{% if object %}{{ object.codigo }} {{ object.titulo }}{% else %}Nova questão{% endif %}</h1>
+  <div class="acoes">
+    {% if object %}<a href="{% url 'excluir_questao' object.pk %}" role="button" class="secondary outline">Excluir</a>{% endif %}
+    <button type="submit" form="form-questao">Salvar questão</button>
+  </div>
+</div>
+<p class="resumo">Nos campos de lista, cada linha vira um item.</p>
+
+<form method="post" id="form-questao">
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+  <section class="bloco">
+    <h2>Identificação</h2>
+    <div class="campos">
+      <div>{{ form.codigo.as_field_group }}</div>
+      <div>{{ form.numero.as_field_group }}</div>
+      <div>{{ form.sentimento_esperado.as_field_group }}</div>
+    </div>
+    {{ form.titulo.as_field_group }}
+  </section>
+  <section class="bloco">
+    <h2>Pergunta e resposta esperada</h2>
+    {{ form.pergunta.as_field_group }}
+    {{ form.resposta_esperada.as_field_group }}
+  </section>
+  <section class="bloco">
+    <h2>Critérios do juiz</h2>
+    {{ form.ementas_esperadas.as_field_group }}
+    {{ form.referencias.as_field_group }}
+    {{ form.pontos_obrigatorios.as_field_group }}
+    {{ form.inaceitavel.as_field_group }}
+    {{ form.observacao.as_field_group }}
+  </section>
+  <button type="submit">Salvar questão</button>
+</form>
+{% endblock %}

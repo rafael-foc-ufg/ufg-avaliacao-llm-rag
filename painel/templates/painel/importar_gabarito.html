@@ -1,0 +1,85 @@
+{% extends "painel/base.html" %}
+
+{% block titulo %}Importar gabarito{% endblock %}
+
+{% block conteudo %}
+<p><a href="{% url 'gabarito' %}">Voltar ao gabarito</a></p>
+<div class="cabecalho"><h1>Importar gabarito</h1></div>
+<p class="resumo">Cadastra as questões a partir do documento Word de mapeamento. Antes de gravar, mostra o que foi lido.</p>
+
+<section class="bloco">
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ formulario.non_field_errors }}
+    {{ formulario.arquivo.as_field_group }}
+    <button type="submit">Ler documento</button>
+  </form>
+</section>
+
+{% if questoes %}
+<section class="bloco">
+  <h2>Prévia de {{ arquivo }}</h2>
+  <p>{{ questoes|length }} quest{{ questoes|length|pluralize:"ão,ões" }} encontrada{{ questoes|length|pluralize }}: {{ novas }} nova{{ novas|pluralize }} e {{ existentes }} já cadastrada{{ existentes|pluralize }}.</p>
+
+  {% if bloqueada %}
+  <p class="aviso" role="alert">O documento tem erros, marcados na tabela. Corrija o documento e envie de novo.</p>
+  {% else %}
+  <form method="post" action="{% url 'confirmar_importacao' %}" class="acoes">
+    {% csrf_token %}
+    {% if existentes %}
+    <button type="submit" name="modo" value="todas"
+      onclick="return confirm('Sobrescrever as {{ existentes }} questões já cadastradas com o conteúdo do documento?')">
+      Importar tudo e sobrescrever {{ existentes }} existente{{ existentes|pluralize }}
+    </button>
+    {% if novas %}
+    <button type="submit" name="modo" value="novas" class="secondary">Importar só as {{ novas }} nova{{ novas|pluralize }}</button>
+    {% endif %}
+    {% else %}
+    <button type="submit" name="modo" value="todas">Importar {{ questoes|length }} quest{{ questoes|length|pluralize:"ão,ões" }}</button>
+    {% endif %}
+    <a href="{% url 'gabarito' %}">Cancelar</a>
+  </form>
+  {% if existentes %}
+  <p class="nota">Sobrescrever troca o gabarito das questões já cadastradas.{% if execucoes_afetadas %} {{ execucoes_afetadas }} execuç{{ execucoes_afetadas|pluralize:"ão,ões" }} de rodadas estão ligadas a essas questões; se forem avaliadas de novo, o juiz usará o gabarito novo.{% endif %}</p>
+  {% endif %}
+  {% endif %}
+
+  <div class="overflow-auto">
+    <table>
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Título</th>
+          <th>Sentimento</th>
+          <th>Ementas</th>
+          <th>Referências</th>
+          <th>Pontos obrig.</th>
+          <th>Inaceitável</th>
+          <th>Situação</th>
+          <th>Avisos</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for questao in questoes %}
+        <tr>
+          <td>{{ questao.codigo }}</td>
+          <td>{{ questao.titulo }}</td>
+          <td>{% if questao.sentimento_esperado == "positivo_ou_negativo" %}positivo ou negativo{% else %}{{ questao.sentimento_esperado|default:"—" }}{% endif %}</td>
+          <td>{{ questao.ementas_esperadas|length }}</td>
+          <td>{{ questao.referencias|length }}</td>
+          <td>{{ questao.pontos_obrigatorios|length }}</td>
+          <td>{{ questao.inaceitavel|length }}</td>
+          <td>{% if questao.existe %}Já cadastrada{% else %}Nova{% endif %}</td>
+          <td>
+            {% for erro in questao.erros %}<p><b>Erro:</b> {{ erro }}</p>{% endfor %}
+            {% if questao.conflito %}<p><b>Erro:</b> {{ questao.conflito }}</p>{% endif %}
+            {% for aviso in questao.avisos %}<p class="nota">{{ aviso }}</p>{% endfor %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

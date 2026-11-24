@@ -1,0 +1,275 @@
+{% extends "painel/base.html" %}
+{% load apresentacao %}
+
+{% block titulo %}Rodada {{ object.pk }}{% endblock %}
+
+{% block cabecalho %}{% if object.status == "executando" or object.status_avaliacao == "avaliando" %}<meta http-equiv="refresh" content="10">{% endif %}{% endblock %}
+
+{% block conteudo %}
+<div class="tela-rodada">
+  <div class="linha-topo">
+    <a href="{% url 'rodadas' %}">‹ Rodadas</a>
+    <h1>Rodada {{ object.pk }}</h1>
+    <span class="situacao {{ object.status }}">{{ object.get_status_display }}</span>
+    <span class="nota">{{ object.criada_em|date:"d/m/Y" }} às {{ object.criada_em|date:"H:i" }} · índice {{ object.indice.nome }} · {{ feitas }} de {{ object.total }} respostas gravadas</span>
+    {% if object.config %}<button type="button" class="link" popovertarget="configuracao">Configuração</button>{% endif %}
+    {% if prompts_juiz %}<button type="button" class="link" popovertarget="prompts-juiz">Prompt do juiz</button>{% endif %}
+  </div>
+
+  {% if object.erro %}
+  <p class="aviso erro" role="alert">Erro: {{ object.erro }}</p>
+  {% endif %}
+  {% if object.erro_avaliacao %}
+  <p class="aviso erro" role="alert">Erro na avaliação: {{ object.erro_avaliacao }}</p>
+  {% endif %}
+
+  {% if object.config %}
+  {% with config=object.config %}
+  <div popover id="configuracao" class="balao">
+    <h2>Configuração usada nesta rodada</h2>
+    <div class="duas-colunas">
+      <table>
+        <caption>Geração</caption>
+        <tbody>
+          <tr><td>Provedor</td><td>{{ config.provedor|title }}</td></tr>
+          <tr><td>Modelo</td><td>{% if config.provedor == "groq" %}{{ config.modelos.groq }}{% else %}{{ config.modelos.bedrock }}{% endif %}</td></tr>
+          <tr><td>Região</td><td>{{ config.modelos.regiao }}</td></tr>
+          <tr><td>Temperatura</td><td>{{ config.geracao.temperatura|floatformat:"-1" }}</td></tr>
+          <tr><td>Máximo de tokens</td><td>{{ config.geracao.max_tokens|floatformat:"0g" }}</td></tr>
+          <tr><td>Modelo juiz</td><td>{% for modelo in modelos_juiz %}{{ modelo }}{% if not forloop.last %}, {% endif %}{% empty %}Ainda sem avaliação{% endfor %}</td></tr>
+        </tbody>
+      </table>
+      <table>
+        <caption>Recuperação (com RAG)</caption>
+        <tbody>
+          <tr><td>Índice</td><td>{{ object.indice.nome }}</td></tr>
+          <tr><td>Embedding</td><td>{{ config.modelos.embedding }}</td></tr>
+          <tr><td>Rerank</td><td>{{ config.modelos.rerank }}</td></tr>
+          <tr><td>Chunk e sobreposição</td><td>{{ config.chunking.tamanho|floatformat:"0g" }} e {{ config.chunking.overlap|floatformat:"0g" }}</td></tr>
+          <tr><td>Candidatos de jurisprudência</td><td>{{ config.recuperacao.candidatos_jurisprudencia }}</td></tr>
+          <tr><td>Candidatos de legislação</td><td>{{ config.recuperacao.candidatos_legislacao }}</td></tr>
+          <tr><td>Trechos enviados ao modelo</td><td>{{ config.recuperacao.top_k }}</td></tr>
+          <tr><td>Piso por fonte</td><td>{{ config.recuperacao.piso_por_fonte }}</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endwith %}
+  {% endif %}
+
+  {% if prompts_juiz %}
+  <div popover id="prompts-juiz" class="balao">
+    <h2>{% if prompts_juiz|length > 1 %}Prompts do juiz usados nesta rodada ({{ prompts_juiz|length }} versões){% else %}Prompt do juiz usado nesta rodada{% endif %}</h2>
+    {% for prompt in prompts_juiz %}
+    <pre>{% if prompt %}{{ prompt }}{% else %}Não registrado: avaliação feita antes de o prompt ser gravado.{% endif %}</pre>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if linhas %}
+  <section class="quadro mapa-quadro">
+    <div class="cabecalho">
+      <div class="acoes">
+        <h2>Avaliação do juiz</h2>
+        {% if object.status == "concluida" %}<span class="situacao {{ object.status_avaliacao }}">{{ object.get_status_avaliacao_display }}</span>{% endif %}
+        <button type="button" class="link" popovertarget="como-avalia">Como o juiz avalia</button>
+        {% if julgamentos %}
+        <nav class="julgamentos" aria-label="Julgamentos">
+          Julgamento
+          {% for numero in julgamentos %}<a href="?julgamento={{ numero }}"{% if numero == julgamento %} aria-current="page"{% endif %}>{{ numero }}º</a>{% endfor %}
+        </nav>
+        {% endif %}
+        {% if object.status == "concluida" and object.status_avaliacao != "avaliando" %}
+        <form method="post" action="{% url 'avaliar_rodada' object.pk %}" class="acoes">
+          {% csrf_token %}
+          <button type="submit" class="outline" data-espera="Iniciando a avaliação">{% if object.status_avaliacao == "pendente" %}Avaliar com o juiz{% else %}Avaliar as respostas pendentes{% endif %}</button>
+          {% if julgamentos %}<button type="submit" name="novo" value="1" class="outline" data-espera="Iniciando o novo julgamento" title="Reavalia todas as respostas com o prompt e o modelo atuais, sem apagar os julgamentos anteriores">Novo julgamento</button>{% endif %}
+        </form>
+        {% endif %}
+      </div>
+      <span class="escala nota">0 <span class="escala-faixa"></span> 1 · nota 10</span>
+    </div>
+    {% if pendencias %}
+    <details class="pendencias">
+      <summary>{{ nao_verificados }} processo{{ nao_verificados|pluralize }} não verificado{{ nao_verificados|pluralize }} no DataJud em {{ pendencias|length }} quest{{ pendencias|length|pluralize:"ão,ões" }}</summary>
+      <p class="nota">A API pública do DataJud, do CNJ, é instável e às vezes não responde. Só são consultados os TRFs e o STJ: processos de outros tribunais ficam sem verificação. Processo não verificado não conta a favor nem contra.</p>
+      {% if pode_reavaliar %}<form method="post" action="{% url 'avaliar_rodada' object.pk %}" id="reavaliar-questao">{% csrf_token %}</form>{% endif %}
+      <div class="pendencias-lista">
+        <table>
+          <thead>
+            <tr><th>Questão</th>{% for sistema in placar %}<th>{{ sistema.rotulo }}</th>{% endfor %}{% if pode_reavaliar %}<th></th>{% endif %}</tr>
+          </thead>
+          <tbody>
+            {% for pendencia in pendencias %}
+            <tr>
+              <td>{{ pendencia.questao.codigo }}</td>
+              {% for numeros in pendencia.numeros %}<td>{{ numeros|join:", "|default:"—" }}</td>{% endfor %}
+              {% if pode_reavaliar %}<td><button type="submit" form="reavaliar-questao" name="questao" value="{{ pendencia.questao.pk }}" class="outline" data-espera="Iniciando a reavaliação">Reavaliar</button></td>{% endif %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if pode_reavaliar %}
+      <form method="post" action="{% url 'avaliar_rodada' object.pk %}" class="acoes">
+        {% csrf_token %}
+        {% for pendencia in pendencias %}<input type="hidden" name="questao" value="{{ pendencia.questao.pk }}">{% endfor %}
+        <button type="submit" class="outline" data-espera="Iniciando a reavaliação">Reavaliar todas</button>
+        <span class="nota">Consulta o DataJud de novo e o juiz avalia outra vez as duas respostas da questão, com o prompt e o modelo atuais. A avaliação anterior da questão neste julgamento é substituída.</span>
+      </form>
+      {% endif %}
+    </details>
+    {% endif %}
+    <div popover id="como-avalia" class="balao">O juiz avalia cada resposta sozinha, em ordem aleatória, vendo apenas a questão do gabarito e o texto. Não sabe se a resposta usou RAG. A origem só é cruzada aqui, no mapa. Célula hachurada: resposta sem citações verificáveis. Clique numa linha para abrir a questão, numa célula de critério para abri-la naquele critério, e no cabeçalho Fidelidade, Precisão ou Completude para ver o critério em todas as questões.</div>
+    <table class="mapa">
+      <colgroup><col class="c-questao">{% for sistema in placar %}<col span="4"><col class="c-tese"><col class="c-separador">{% endfor %}<col class="c-delta"></colgroup>
+      <thead>
+        <tr>
+          <th></th>
+          {% for sistema in placar %}<th class="grupo" colspan="5">{{ sistema.rotulo }}</th><th></th>{% endfor %}
+          <th class="grupo">Δ nota</th>
+        </tr>
+        <tr>
+          <th></th>
+          {% for sistema in placar %}
+          <th>Nota</th>
+          {% for criterio in criterios %}<th><label for="aba-{{ criterio.chave }}" class="cab-criterio" data-trecho="criterio" title="{{ criterio.nome }} em todas as questões">{{ criterio.nome }}</label></th>{% endfor %}
+          <th title="A resposta sustenta a mesma tese da resposta esperada do gabarito, ainda que com outras palavras. O sentimento é julgado à parte. Conta como um item de Precisão.">Tese</th>
+          <th></th>
+          {% endfor %}
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for linha in linhas %}
+        <tr data-trecho="{{ forloop.counter }}" aria-pressed="{% if forloop.first %}true{% else %}false{% endif %}">
+          <td class="questao" title="{{ linha.questao.titulo }}"><button type="button">{{ linha.questao.codigo }} <span>{{ linha.questao.titulo }}</span></button></td>
+          {% for avaliacao in linha.avaliacoes %}
+          {% if avaliacao %}
+          <td style="{{ avaliacao.nota|cor_mapa:10 }}">{{ avaliacao.nota|floatformat:2 }}</td>
+          <td{% if avaliacao.fidelidade is None %} class="vazio"{% endif %} style="{{ avaliacao.fidelidade|cor_mapa:2 }}"><label for="aba-fidelidade">{% if avaliacao.fidelidade is not None %}{{ avaliacao.fidelidade|floatformat:2 }}{% else %}—{% endif %}</label></td>
+          <td style="{{ avaliacao.precisao|cor_mapa:2 }}"><label for="aba-precisao">{{ avaliacao.precisao|floatformat:2 }}</label></td>
+          <td style="{{ avaliacao.completude|cor_mapa:2 }}"><label for="aba-completude">{{ avaliacao.completude|floatformat:2 }}</label></td>
+          <td><span class="situacao-item {% if avaliacao.tese_correta %}correta" title="Tese correta">✓{% else %}incorreta" title="Tese incorreta">✗{% endif %}</span></td>
+          {% else %}
+          <td>—</td><td>—</td><td>—</td><td>—</td><td></td>
+          {% endif %}
+          <td></td>
+          {% endfor %}
+          <td class="delta{% if linha.delta < 0 %} negativo{% endif %}">{% if linha.delta is not None %}{% if linha.delta > 0 %}+{% endif %}{{ linha.delta|floatformat:2 }}{% else %}—{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td class="questao" title="Amplitude média da nota: {% for sistema in placar %}{{ sistema.amplitude_media|floatformat:2 }} {{ sistema.rotulo|lower }}{% if not forloop.last %}, {% endif %}{% endfor %}"><b>Média</b></td>
+          {% for sistema in placar %}
+          <td style="{{ sistema.nota_media|cor_mapa:10 }}">{{ sistema.nota_media|floatformat:2|default:"—" }}</td>
+          <td style="{{ sistema.fidelidade_media|cor_mapa:2 }}" title="Fidelidade em {{ sistema.com_fidelidade }} de {{ sistema.avaliadas }}">{{ sistema.fidelidade_media|floatformat:2|default:"—" }}</td>
+          <td style="{{ sistema.precisao_media|cor_mapa:2 }}">{{ sistema.precisao_media|floatformat:2|default:"—" }}</td>
+          <td style="{{ sistema.completude_media|cor_mapa:2 }}">{{ sistema.completude_media|floatformat:2|default:"—" }}</td>
+          <td class="nota" title="Tese correta">{{ sistema.teses_corretas }}/{{ sistema.avaliadas }}</td>
+          <td></td>
+          {% endfor %}
+          <td class="delta">{% if delta_medio is not None %}{% if delta_medio > 0 %}+{% endif %}{{ delta_medio|floatformat:2 }}{% else %}—{% endif %}</td>
+        </tr>
+      </tfoot>
+    </table>
+    {% if avaliada %}
+    <p class="nota">Δ nota só nas questões com todos os processos verificados nos dois sistemas ({{ questoes_verificadas }}): {% if delta_verificado is not None %}{% if delta_verificado > 0 %}+{% endif %}{{ delta_verificado|floatformat:2 }}{% else %}—{% endif %}</p>
+    {% endif %}
+  </section>
+
+  <div class="detalhe">
+    <input type="radio" name="aba" id="aba-pergunta" class="oculto">
+    <input type="radio" name="aba" id="aba-respostas" class="oculto"{% if not avaliada %} checked{% endif %}>
+    {% for criterio in criterios %}
+    <input type="radio" name="aba" id="aba-{{ criterio.chave }}" class="oculto"{% if avaliada and forloop.first %} checked{% endif %}>
+    {% endfor %}
+    <input type="checkbox" id="so-falhas" class="oculto">
+
+    {% for linha in linhas %}
+    <section class="quadro painel" data-leitura="{{ forloop.counter }}" {% if not forloop.first %}hidden{% endif %}>
+      <h2 class="titulo-painel">{{ linha.questao.codigo }} {{ linha.questao.titulo }}</h2>
+      <div class="abas">
+        <label for="aba-pergunta">Pergunta</label>
+        <label for="aba-respostas">Respostas</label>
+        {% for criterio in linha.criterios %}
+        <label for="aba-{{ criterio.chave }}" title="{{ criterio.olha }}">{{ criterio.nome }}<small>{% for celula in criterio.celulas %}{% if celula.bloco.fracao.total %}{{ celula.bloco.fracao.acertos }}/{{ celula.bloco.fracao.total }}{% else %}—{% endif %}{% if not forloop.last %} · {% endif %}{% endfor %}</small></label>
+        {% endfor %}
+        <label for="so-falhas" class="filtro">Só falhas</label>
+      </div>
+      <div class="aba aba-pergunta"><p class="pergunta">{{ linha.pergunta }}</p></div>
+      <div class="aba aba-respostas colunas">
+        {% for rotulo, execucao in linha.respostas %}
+        <div>
+          <div class="metricas">
+            <b>{{ rotulo }}</b>
+            {% if execucao %}
+            <span><b>{{ execucao.latencia_ms|segundos }}</b> de latência</span>
+            <span><b>{{ execucao.tokens_entrada|floatformat:"0g" }}</b> tokens de entrada</span>
+            <span><b>{{ execucao.tokens_saida|floatformat:"0g" }}</b> de saída</span>
+            <a href="{% url 'execucao' execucao.pk %}">Detalhes</a>
+            {% endif %}
+          </div>
+          {% if execucao %}<div class="resposta">{{ execucao.resposta|markdown }}</div>{% else %}<p class="nota">Ainda sem resposta.</p>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% for criterio in linha.criterios %}
+      <div class="aba aba-{{ criterio.chave }} colunas">
+        {% for celula in criterio.celulas %}
+        <div>
+          <div class="resumo-criterio">
+            <b>{{ celula.rotulo }}</b>
+            {% if celula.avaliacao %}
+            <span class="selo {% if celula.avaliacao.nota >= 7 %}bom{% elif celula.avaliacao.nota >= 5 %}medio{% else %}ruim{% endif %}">{{ celula.avaliacao.nota|floatformat:2 }} de 10</span>
+            <span class="situacao-item {% if celula.avaliacao.tese_correta %}correta">tese correta{% else %}incorreta">tese incorreta{% endif %}</span>
+            {% endif %}
+          </div>
+          {% if celula.bloco %}{% include "painel/_bloco_criterio.html" with bloco=celula.bloco unidade=criterio.unidade %}{% else %}<p class="nota">Ainda sem avaliação.</p>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </section>
+    {% endfor %}
+
+    <section class="quadro painel" data-leitura="criterio" hidden>
+      <div class="abas">
+        {% for criterio in criterios %}<label for="aba-{{ criterio.chave }}">{{ criterio.nome }}</label>{% endfor %}
+        <label for="so-falhas" class="filtro">Só falhas</label>
+      </div>
+      {% for criterio in criterios %}
+      <div class="aba aba-{{ criterio.chave }} por-criterio">
+        <div class="resumo-rodada">
+          <p class="nota">{{ criterio.nome }} em todas as questões. {{ criterio.olha }}</p>
+          {% for resumo in criterio.resumo %}
+          <div class="resumo-criterio">
+            <b>{{ resumo.rotulo }}</b>
+            {% if resumo.total %}
+            <b>{{ resumo.acertos }} de {{ resumo.total }} {{ criterio.unidade }}</b>
+            <span class="barra-criterio"><span style="width: {% widthratio resumo.acertos resumo.total 100 %}%"></span></span>
+            {% endif %}
+            {% for situacao, quantidade in resumo.situacoes %}<span class="situacao-item {{ situacao }}">{{ quantidade }} {{ situacao|situacao_item|lower }}</span>{% endfor %}
+          </div>
+          {% endfor %}
+        </div>
+        <div class="linha-criterio cabeca"><div></div>{% for resumo in criterio.resumo %}<div>{{ resumo.rotulo }}</div>{% endfor %}</div>
+        {% for questao, celulas in criterio.linhas %}
+        <div class="linha-criterio">
+          <div><button type="button" class="link" data-trecho="{{ forloop.counter }}"><b>{{ questao.codigo }}</b> {{ questao.titulo }}</button></div>
+          {% for celula in celulas %}
+          <div>{% if celula.bloco %}{% include "painel/_bloco_criterio.html" with bloco=celula.bloco unidade=criterio.unidade %}{% else %}<p class="nota">Ainda sem avaliação.</p>{% endif %}</div>
+          {% endfor %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </section>
+  </div>
+  {% else %}
+  <p class="nota">Nenhuma resposta gravada ainda.</p>
+  {% endif %}
+</div>
+{% endblock %}

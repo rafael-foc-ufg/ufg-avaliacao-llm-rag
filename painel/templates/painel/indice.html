@@ -1,0 +1,83 @@
+{% extends "painel/base.html" %}
+{% load apresentacao %}
+
+{% block titulo %}{{ indice.nome }}{% endblock %}
+
+{% block conteudo %}
+<p><a href="{% url 'indices' %}">Voltar aos índices</a></p>
+<div class="cabecalho">
+  <h1>{{ indice.nome }}</h1>
+  {% if indice.nome == indice_ativo %}<span class="ativo">Ativo</span>{% else %}<span class="situacao {{ indice.status }}">{{ indice.get_status_display }}</span>{% endif %}
+</div>
+<p class="resumo">Chunk {{ indice.tamanho|floatformat:"0g" }}, sobreposição {{ indice.overlap|floatformat:"0g" }}, embedding {{ indice.embedding }}.</p>
+
+{% if indice.erro %}
+<p class="aviso erro" role="alert">Erro: {{ indice.erro }}</p>
+{% endif %}
+
+{% if pasta_ausente %}
+<p class="aviso erro" role="alert">A pasta deste índice não foi encontrada.</p>
+{% endif %}
+
+{% if indice.estatisticas %}
+<section class="bloco">
+  <h2>Tamanhos por fonte</h2>
+  <div class="overflow-auto">
+    <table>
+      <thead>
+        <tr>
+          <th>Fonte</th>
+          <th class="numero">Chunks</th>
+          <th class="numero">Menor</th>
+          <th class="numero">Mediana</th>
+          <th class="numero">Maior</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for fonte, medida in indice.estatisticas.items %}
+        <tr>
+          <td>{{ fonte|nome_fonte }}</td>
+          <td class="numero">{{ medida.chunks|floatformat:"0g" }}</td>
+          <td class="numero">{{ medida.tam_min|floatformat:"0g" }}</td>
+          <td class="numero">{{ medida.tam_mediana|floatformat:"0g" }}</td>
+          <td class="numero">{{ medida.tam_max|floatformat:"0g" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+
+{% if indice.status == "pronto" and not pasta_ausente %}
+<section class="bloco">
+  <div class="cabecalho">
+    <h2>Chunks</h2>
+    {% if chunks %}<span class="nota">{{ primeiro_chunk|floatformat:"0g" }} a {{ ultimo_chunk|floatformat:"0g" }}{% if total_da_fonte %} de {{ total_da_fonte|floatformat:"0g" }}{% endif %}</span>{% endif %}
+  </div>
+  <form method="get">
+    <div class="campos">
+      <label>{{ filtro.fonte.label }} {{ filtro.fonte }}</label>
+      <label>{{ filtro.doc_id.label }} {{ filtro.doc_id }}</label>
+    </div>
+    <button type="submit" class="secondary outline">Filtrar chunks</button>
+  </form>
+
+  <div class="overflow-auto rolagem">
+    {% for chunk in chunks %}
+    <details>
+      <summary>{% firstof chunk.meta.citacao chunk.meta.titulo chunk.meta.doc_id %}<span class="previa">{{ chunk.texto|previa }}</span></summary>
+      <div class="texto-legal">{{ chunk.texto|texto_legal }}</div>
+    </details>
+    {% empty %}
+    <p class="nota">Nenhum chunk encontrado com esse filtro.</p>
+    {% endfor %}
+  </div>
+
+  <div class="paginacao">
+    {% if pagina_anterior %}<a href="{% querystring pagina=pagina_anterior %}">Anterior</a>{% endif %}
+    {% if pagina_seguinte %}<a href="{% querystring pagina=pagina_seguinte %}">Próxima</a>{% endif %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

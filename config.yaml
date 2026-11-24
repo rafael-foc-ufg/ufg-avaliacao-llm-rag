@@ -1,0 +1,32 @@
+provedor: bedrock
+caminhos:
+  base_cjf: base/cjf
+  base_juridica: base/juridica
+  indices: data/index
+  indice: data/index/indice-2026-11-23-11-38
+  prompt_juiz: prompts/juiz.txt
+modelos:
+  regiao: us-east-1
+  embedding: cohere.embed-multilingual-v3
+  rerank: cohere.rerank-v3-5:0
+  rerank_hf: cross-encoder/mmarco-mMiniLMv2-L12-H384-v1
+  bedrock: global.anthropic.claude-sonnet-4-5-20250929-v1:0
+  juiz: global.anthropic.claude-sonnet-5-5
+  groq: openai/gpt-oss-20b
+  juiz_groq: openai/gpt-oss-120b
+datajud:
+  url: https://api-publica.datajud.cnj.jus.br
+geracao:
+  temperatura: 0.0
+  max_tokens: 2048
+  max_tokens_juiz: 8192
+  raciocinio_groq: low
+  raciocinio_juiz_groq: low
+chunking:
+  tamanho: 1500
+  overlap: 200
+recuperacao:
+  candidatos_jurisprudencia: 20
+  candidatos_legislacao: 10
+  top_k: 10
+  piso_por_fonte: 2

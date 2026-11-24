@@ -1,0 +1,37 @@
+{% extends "painel/base.html" %}
+
+{% block titulo %}Modelos{% endblock %}
+
+{% block conteudo %}
+<div class="cabecalho">
+  <h1>Modelos</h1>
+</div>
+<p class="resumo">Modelos que o projeto chama no Amazon Bedrock, região {{ regiao }}, segundo as fichas oficiais da AWS.</p>
+
+{% for ficha in fichas %}
+<section class="bloco">
+  <details{% if not ficha.confere %} open{% endif %}>
+  <summary><b>{{ ficha.nome }}</b> · {{ ficha.papel }}</summary>
+  <p>{{ ficha.descricao }} <a href="{{ ficha.guia }}" target="_blank" rel="noopener">Ficha na AWS</a></p>
+  {% if not ficha.confere %}
+  <p class="aviso erro" role="alert">O config.yaml aponta para {{ ficha.configurado }}, que não é o modelo desta ficha.</p>
+  {% endif %}
+  <div class="overflow-auto">
+    <table>
+      <tbody>
+        <tr><td>Fornecedor</td><td>{{ ficha.fornecedor }}</td></tr>
+        <tr><td>ID no config.yaml</td><td><code>{{ ficha.configurado }}</code></td></tr>
+        {% for rotulo, valor in ficha.ids.items %}
+        <tr><td>ID {{ rotulo|lower }}</td><td><code>{{ valor }}</code></td></tr>
+        {% endfor %}
+        {% for rotulo, valor in ficha.detalhes.items %}
+        <tr><td>{{ rotulo }}</td><td>{{ valor }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  </details>
+</section>
+{% endfor %}
+<p class="nota">Preço: modelos de terceiros, cobrados pelo AWS Marketplace. Consulte a <a href="https://aws.amazon.com/bedrock/pricing/" target="_blank" rel="noopener">página de preços do Bedrock</a>.</p>
+{% endblock %}

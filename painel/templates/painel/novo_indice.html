@@ -1,0 +1,54 @@
+{% extends "painel/base.html" %}
+{% load apresentacao %}
+
+{% block titulo %}Novo índice{% endblock %}
+
+{% block conteudo %}
+<p><a href="{% url 'indices' %}">Voltar aos índices</a></p>
+<div class="cabecalho"><h1>Novo índice</h1></div>
+<p class="resumo">Estimar não chama a AWS. Construir chama o embedding e tem custo.</p>
+<div class="duas-colunas">
+  <section class="bloco">
+    <h2>Parâmetros</h2>
+    <form method="post">
+      {% csrf_token %}
+      {{ formulario.as_div }}
+      <button type="submit" name="acao" value="estimar" class="secondary outline" data-espera="Estimando">Estimar tamanho</button>
+    </form>
+  </section>
+  <section class="bloco">
+    <h2>Estimativa</h2>
+    {% if estimativa %}
+    <div class="overflow-auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Fonte</th>
+            <th class="numero">Chunks</th>
+            <th class="numero">Caracteres</th>
+            <th class="numero">Tokens</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for linha in estimativa %}
+          <tr>
+            <td>{{ linha.fonte|nome_fonte }}</td>
+            <td class="numero">{{ linha.chunks|floatformat:"0g" }}</td>
+            <td class="numero">{{ linha.caracteres|floatformat:"0g" }}</td>
+            <td class="numero">{{ linha.tokens_min|floatformat:"0g" }} a {{ linha.tokens_max|floatformat:"0g" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <form method="post">
+      {% csrf_token %}
+      {% for campo in estimado %}{{ campo.as_hidden }}{% endfor %}
+      <button type="submit" name="acao" value="construir" data-espera="Iniciando a construção">Construir índice</button>
+    </form>
+    {% else %}
+    <p class="nota">Ajuste os parâmetros e clique em estimar tamanho.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

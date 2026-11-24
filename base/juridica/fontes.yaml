@@ -1,0 +1,80 @@
+in-inss-128-2022:
+  norma: IN INSS 128/2022
+  url: https://portalin.inss.gov.br/in
+  capturado_em: "2026-10-31"
+lei-8213-1991:
+  norma: Lei 8.213/91
+  url: https://www.planalto.gov.br/ccivil_03/leis/l8213cons.htm
+  capturado_em: "2026-10-31"
+decreto-3048-1999:
+  norma: Decreto 3.048/99
+  url: https://www.planalto.gov.br/ccivil_03/decreto/d3048.htm
+  capturado_em: "2026-10-31"
+lei-8212-1991:
+  norma: Lei 8.212/91
+  url: https://www.planalto.gov.br/ccivil_03/leis/l8212cons.htm
+  capturado_em: "2026-10-31"
+lei-8112-1990:
+  norma: Lei 8.112/90
+  url: https://www.planalto.gov.br/ccivil_03/leis/l8112cons.htm
+  capturado_em: "2026-10-31"
+lei-10406-2002-codigo-civil:
+  norma: Codigo Civil (Lei 10.406/02)
+  url: https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm
+  capturado_em: "2026-10-31"
+cf-1988:
+  norma: CF/88
+  url: https://www.planalto.gov.br/ccivil_03/constituicao/constituicao.htm
+  capturado_em: "2026-10-31"
+decreto-lei-3347-1941:
+  norma: Decreto-Lei 3.347/41
+  url: https://www.planalto.gov.br/ccivil_03/decreto-lei/1937-1946/del3347.htm
+  capturado_em: "2026-10-31"
+lei-10887-2004:
+  norma: Lei 10.887/04
+  url: https://www.planalto.gov.br/ccivil_03/_ato2004-2006/2004/lei/l10.887.htm
+  capturado_em: "2026-10-31"
+ec-41-2003:
+  norma: EC 41/2003
+  url: https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc41.htm
+  capturado_em: "2026-10-31"
+ec-47-2005:
+  norma: EC 47/2005
+  url: https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc47.htm
+  capturado_em: "2026-10-31"
+ec-70-2012:
+  norma: EC 70/2012
+  url: https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc70.htm
+  capturado_em: "2026-10-31"
+lei-13135-2015:
+  norma: Lei 13.135/15
+  url: https://www.planalto.gov.br/ccivil_03/_ato2015-2018/2015/lei/l13135.htm
+  capturado_em: "2026-10-31"
+lei-3373-1958:
+  norma: Lei 3.373/58
+  url: https://www.planalto.gov.br/ccivil_03/leis/1950-1969/l3373.htm
+  capturado_em: "2026-10-31"
+portaria-me-424-2020:
+  norma: Portaria ME 424/2020
+  url: https://www.in.gov.br/en/web/dou/-/portaria-me-n-424-de-29-de-dezembro-de-2020-296880511
+  capturado_em: "2026-10-31"
+portaria-sgp-sedgg-me-4645-2022:
+  norma: Portaria SGP/SEDGG/ME 4.645/2022
+  url: https://www.in.gov.br/web/dou/-/portaria-sgp/sedgg/me-n-4645-de-24-de-maio-de-2022-402962466
+  capturado_em: "2026-10-31"
+ec-103-2019:
+  norma: EC 103/2019
+  url: https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc103.htm
+  capturado_em: "2026-10-31"
+mpv-664-2014:
+  norma: MPV 664/2014 (revogada)
+  url: https://www.planalto.gov.br/ccivil_03/_ato2011-2014/2014/mpv/mpv664.htm
+  capturado_em: "2026-10-31"
+mpv-871-2019:
+  norma: MPV 871/2019 (revogada)
+  url: https://www.planalto.gov.br/ccivil_03/_ato2019-2022/2019/mpv/mpv871.htm
+  capturado_em: "2026-10-31"
+pensao-por-morte-inss-rppu:
+  norma: INSS - Pensao por morte (RPPU)
+  url: https://www.gov.br/inss/pt-br/assuntos/servidores-aposentados-e-pensionistas-rppu/concessao/pensao-por-morte
+  capturado_em: "2026-10-31"

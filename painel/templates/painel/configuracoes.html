@@ -1,0 +1,83 @@
+{% extends "painel/base.html" %}
+
+{% block titulo %}Padrão do projeto{% endblock %}
+
+{% block conteudo %}
+<div class="cabecalho">
+  <h1>Padrão do projeto</h1>
+  <button type="submit" form="form-ajustes">Salvar configurações</button>
+</div>
+<p class="resumo">Salvar altera o config.yaml.</p>
+
+<form method="post" id="form-ajustes">
+  {% csrf_token %}
+  {{ formulario.non_field_errors }}
+  <div class="duas-colunas">
+    <section class="bloco">
+      <h2>Geração</h2>
+      {{ formulario.provedor.as_field_group }}
+      {{ formulario.modelo_bedrock.as_field_group }}
+      {{ formulario.modelo_groq.as_field_group }}
+      <datalist id="modelos-groq">
+        {% for modelo in modelos_groq %}<option value="{{ modelo }}">{% endfor %}
+      </datalist>
+      {{ formulario.raciocinio_groq.as_field_group }}
+      <div class="campos">
+        <div>{{ formulario.temperatura.as_field_group }}</div>
+        <div>{{ formulario.max_tokens.as_field_group }}</div>
+      </div>
+    </section>
+    <section class="bloco">
+      <h2>Recuperação</h2>
+      <div class="campos">
+        <div>{{ formulario.candidatos_jurisprudencia.as_field_group }}</div>
+        <div>{{ formulario.candidatos_legislacao.as_field_group }}</div>
+      </div>
+      {{ formulario.top_k.as_field_group }}
+      {{ formulario.piso_por_fonte.as_field_group }}
+    </section>
+  </div>
+</form>
+
+<section class="bloco">
+  <h2>Credenciais</h2>
+  <p class="nota">Chave do Groq: {% if groq_configurado %}<span class="situacao">configurada</span>{% else %}<span class="situacao falhou">não configurada</span>{% endif %}. A AWS continua lida das variáveis AWS_* do .env.</p>
+  <form method="post" action="{% url 'salvar_credenciais' %}">
+    {% csrf_token %}
+    {{ credenciais.groq_api_key.as_field_group }}
+    <button type="submit" class="secondary">Salvar chave</button>
+  </form>
+</section>
+
+<section class="bloco">
+  <div class="cabecalho">
+    <h2>Acesso aos modelos</h2>
+    <form method="post" action="{% url 'testar_modelos' %}">
+      {% csrf_token %}
+      <button type="submit" class="secondary outline" data-espera="Testando modelos">Testar modelos</button>
+    </form>
+  </div>
+  {% if resultados %}
+  <div class="overflow-auto">
+    <table>
+      <thead>
+        <tr>
+          <th>Modelo</th>
+          <th>Diagnóstico</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for resultado in resultados %}
+        <tr>
+          <td>{{ resultado.modelo }}</td>
+          <td><span class="situacao {% if resultado.diagnostico != 'acesso confirmado' %}falhou{% endif %}">{{ resultado.diagnostico }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="nota">Faz uma chamada real a cada modelo para confirmar o acesso.</p>
+  {% endif %}
+</section>
+{% endblock %}

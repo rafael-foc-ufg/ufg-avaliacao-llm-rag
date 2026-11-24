@@ -1,0 +1,22 @@
+{% load apresentacao %}
+<div class="resumo-criterio">
+  {% if bloco.fracao.total %}
+  <b>{{ bloco.fracao.acertos }} de {{ bloco.fracao.total }} {{ unidade }}</b>
+  <span class="barra-criterio"><span style="width: {% widthratio bloco.fracao.acertos bloco.fracao.total 100 %}%"></span></span>
+  {% else %}
+  <span class="nota">sem citações verificáveis</span>
+  {% endif %}
+  {% if bloco.valores|divergiu %}
+  <span class="divergiu">⚠ O juiz divergiu nas 3 avaliações: {% for valor in bloco.valores %}{% if valor is not None %}{{ valor|floatformat:2 }}{% else %}—{% endif %}{% if not forloop.last %} · {% endif %}{% endfor %}</span>
+  {% endif %}
+</div>
+<ul class="itens">
+  {% for item in bloco.itens %}
+  <li class="item {{ item.situacao }}{% if item.destaque %} destaque{% endif %}">
+    <details>
+      <summary><span class="situacao-item {{ item.situacao }}">{{ item.situacao|situacao_item }}</span><span class="texto">{{ item.texto }}</span></summary>
+      {% if item.motivo %}<p class="motivo">{{ item.motivo }}</p>{% endif %}
+    </details>
+  </li>
+  {% endfor %}
+</ul>

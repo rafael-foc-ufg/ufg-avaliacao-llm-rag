@@ -1,0 +1,16 @@
+{% extends "painel/base.html" %}
+
+{% block titulo %}Excluir questão {{ object.codigo }}{% endblock %}
+
+{% block conteudo %}
+<p><a href="{% url 'questao' object.pk %}">Voltar à questão</a></p>
+<div class="cabecalho"><h1>Excluir {{ object.codigo }}</h1></div>
+<section class="bloco">
+  <p>A questão <b>{{ object }}</b> será removida do banco. Esta ação não pode ser desfeita.</p>
+  <form method="post" class="acoes">
+    {% csrf_token %}
+    <button type="submit">Excluir questão</button>
+    <a href="{% url 'questao' object.pk %}">Cancelar</a>
+  </form>
+</section>
+{% endblock %}

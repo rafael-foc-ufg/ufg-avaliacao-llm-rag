@@ -1,0 +1,47 @@
+{% load static %}<!doctype html>
+<html lang="pt-br" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Pesquisa Experimental{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'painel/pico.min.css' %}">
+  <link rel="stylesheet" href="{% static 'painel/painel.css' %}?v=15">
+  <script src="{% static 'painel/painel.js' %}" defer></script>
+  {% block cabecalho %}{% endblock %}
+</head>
+<body>
+  {% with tela=request.resolver_match.url_name %}
+  <div class="app">
+    <aside class="lateral">
+      <a class="marca" href="{% url 'inicio' %}">Pesquisa Experimental</a>
+      <nav aria-label="Testes do RAG">
+        <p class="grupo">Testes do RAG</p>
+        <a href="{% url 'busca' %}" {% if tela == 'busca' %}aria-current="page"{% endif %}>Busca semântica</a>
+        <a href="{% url 'comparar' %}" {% if tela == 'comparar' %}aria-current="page"{% endif %}>Comparar</a>
+        <a href="{% url 'historico' %}" {% if tela == 'historico' or tela == 'execucao' %}aria-current="page"{% endif %}>Histórico</a>
+      </nav>
+      <nav aria-label="Avaliação">
+        <p class="grupo">Avaliação</p>
+        <a href="{% url 'gabarito' %}" {% if tela == 'gabarito' or tela == 'nova_questao' or tela == 'questao' or tela == 'excluir_questao' %}aria-current="page"{% endif %}>Gabarito</a>
+        <a href="{% url 'rodadas' %}" {% if tela == 'rodadas' or tela == 'rodada' %}aria-current="page"{% endif %}>Rodadas</a>
+      </nav>
+      <nav aria-label="Configurações">
+        <p class="grupo">Configuração</p>
+        <a href="{% url 'indices' %}" {% if tela == 'indices' or tela == 'indice' or tela == 'novo_indice' %}aria-current="page"{% endif %}>Índices</a>
+        <a href="{% url 'configuracoes' %}" {% if tela == 'configuracoes' or tela == 'testar_modelos' %}aria-current="page"{% endif %}>Padrão do projeto</a>
+        <a href="{% url 'modelos' %}" {% if tela == 'modelos' %}aria-current="page"{% endif %}>Modelos</a>
+        <a href="{% url 'juiz' %}" {% if tela == 'juiz' %}aria-current="page"{% endif %}>Juiz</a>
+      </nav>
+    </aside>
+    <main class="conteudo">
+      <div class="limite">
+        {% for mensagem in messages %}
+        <p class="aviso" role="status">{{ mensagem }}</p>
+        {% endfor %}
+        {% block conteudo %}{% endblock %}
+      </div>
+    </main>
+  </div>
+  {% endwith %}
+</body>
+</html>

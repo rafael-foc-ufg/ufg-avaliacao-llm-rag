@@ -1,0 +1,24 @@
+{% extends "painel/base.html" %}
+
+{% block titulo %}Juiz{% endblock %}
+
+{% block conteudo %}
+<div class="cabecalho">
+  <h1>Juiz</h1>
+  <button type="submit" form="form-juiz">Salvar configurações</button>
+</div>
+<p class="resumo">Salvar altera o config.yaml e o arquivo {{ caminho }}. Vale para as próximas avaliações; as já feitas não mudam. Provedor em uso: <strong>{% if provedor == "groq" %}Groq{% else %}Bedrock{% endif %}</strong>, definido em Configurações.</p>
+
+<form method="post" id="form-juiz">
+  {% csrf_token %}
+  <section class="bloco">
+    {{ formulario.modelo.as_field_group }}
+    {{ formulario.modelo_groq.as_field_group }}
+    {{ formulario.raciocinio_groq.as_field_group }}
+    <datalist id="modelos-groq">
+      {% for modelo in modelos_groq %}<option value="{{ modelo }}">{% endfor %}
+    </datalist>
+    {{ formulario.prompt.as_field_group }}
+  </section>
+</form>
+{% endblock %}

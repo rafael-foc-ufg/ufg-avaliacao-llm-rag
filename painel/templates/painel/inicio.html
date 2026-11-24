@@ -1,0 +1,48 @@
+{% extends "painel/base.html" %}
+{% load apresentacao %}
+
+{% block conteudo %}
+<div class="cabecalho"><h1>Início</h1></div>
+<p class="resumo">Comece testando uma pergunta ou revise o que já foi respondido.</p>
+<div class="duas-colunas">
+  <section class="bloco">
+    <h2>Testar uma pergunta</h2>
+    <p class="nota">Veja o que o recuperador encontra, sem gerar uma resposta.</p>
+    <a href="{% url 'busca' %}" role="button">Abrir busca semântica</a>
+  </section>
+  <section class="bloco">
+    <h2>Comparar ajustes</h2>
+    <p class="nota">Rode a mesma pergunta com até três configurações.</p>
+    <a href="{% url 'comparar' %}" role="button" class="secondary outline">Abrir comparação</a>
+  </section>
+</div>
+<section class="bloco">
+  <h2>Últimas execuções</h2>
+  {% if execucoes %}
+  <div class="overflow-auto">
+    <table>
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Pergunta</th>
+          <th>Temperatura</th>
+          <th class="numero">Latência</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for execucao in execucoes %}
+        <tr>
+          <td class="data"><a href="{% url 'execucao' execucao.pk %}">{{ execucao.criada_em|date:"d/m/Y H:i" }}</a></td>
+          <td>{{ execucao.pergunta|truncatechars:80 }}</td>
+          <td>{{ execucao.config.geracao.temperatura|floatformat:"-1" }}</td>
+          <td class="numero">{{ execucao.latencia_ms|segundos }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="nota">Nenhuma execução registrada. <a href="{% url 'comparar' %}">Faça a primeira comparação.</a></p>
+  {% endif %}
+</section>
+{% endblock %}

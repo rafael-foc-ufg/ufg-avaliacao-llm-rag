@@ -1,0 +1,51 @@
+{% extends "painel/base.html" %}
+{% load apresentacao %}
+
+{% block titulo %}Execução {{ object.pk }}{% endblock %}
+
+{% block conteudo %}
+<p><a href="{% url 'historico' %}">Voltar ao histórico</a></p>
+<div class="cabecalho"><h1>Execução {{ object.pk }}</h1></div>
+<p class="resumo">{{ object.criada_em|date:"d/m/Y" }} às {{ object.criada_em|date:"H:i" }}, {% if object.indice %}índice {{ object.indice.nome }}{% else %}LLM Padrão{% endif %}.</p>
+<section class="bloco">
+  <h2>Pergunta</h2>
+  <p class="pergunta">{{ object.pergunta }}</p>
+</section>
+<section class="bloco">
+  <h2>Configuração usada</h2>
+  <table>
+    <tbody>
+      <tr><td>Índice</td><td>{% if object.indice %}{{ object.indice.nome }}{% else %}LLM Padrão{% endif %}</td></tr>
+      <tr><td>Provedor</td><td>{{ object.config.provedor|title }}</td></tr>
+      <tr><td>Temperatura</td><td>{{ object.config.geracao.temperatura|floatformat:"-1" }}</td></tr>
+      {% if object.indice %}
+      <tr><td>Trechos enviados</td><td>{{ object.config.recuperacao.top_k }}</td></tr>
+      <tr><td>Chunk e sobreposição</td><td>{{ object.config.chunking.tamanho|floatformat:"0g" }} e {{ object.config.chunking.overlap|floatformat:"0g" }}</td></tr>
+      {% endif %}
+    </tbody>
+  </table>
+</section>
+<section class="bloco">
+  <h2>Resposta</h2>
+  <div class="metricas">
+    <span><b>{{ object.latencia_ms|segundos }}</b> de latência</span>
+    <span><b>{{ object.tokens_entrada|floatformat:"0g" }}</b> tokens de entrada</span>
+    <span><b>{{ object.tokens_saida|floatformat:"0g" }}</b> tokens de saída</span>
+  </div>
+  <div class="resposta overflow-auto rolagem">{{ object.resposta|markdown }}</div>
+</section>
+{% if object.trechos %}
+<section class="bloco">
+  <h2>Trechos ({{ object.trechos|length }})</h2>
+  <div class="overflow-auto rolagem">
+    {% for trecho in object.trechos %}
+    <details>
+      <summary>{{ trecho.citacao }}<span class="previa">{{ trecho.trecho|previa }}</span></summary>
+      <p class="nota">Busca {{ trecho.score_busca|floatformat:4 }}, rerank {{ trecho.score_rerank|floatformat:4 }}</p>
+      <div class="texto-legal">{{ trecho.trecho|texto_legal }}</div>
+    </details>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

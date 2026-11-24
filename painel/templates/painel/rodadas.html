@@ -1,0 +1,55 @@
+{% extends "painel/base.html" %}
+
+{% block titulo %}Rodadas{% endblock %}
+
+{% block cabecalho %}{% if executando %}<meta http-equiv="refresh" content="10">{% endif %}{% endblock %}
+
+{% block conteudo %}
+<div class="cabecalho">
+  <h1>Rodadas</h1>
+  <form id="form-exportar" action="{% url 'exportar_rodadas' %}" method="get"></form>
+  <button type="submit" form="form-exportar" class="secondary outline">Exportar selecionadas para Excel</button>
+</div>
+<p class="resumo">Cada rodada responde as questões selecionadas do gabarito ({{ total_questoes }} cadastradas) com e sem RAG, com o padrão do projeto vigente ao iniciar; a configuração fica gravada na rodada. Chama o modelo e tem custo.{% if executando %} Esta página se atualiza sozinha durante a execução.{% endif %}</p>
+<section class="bloco">
+  <h2>Nova rodada</h2>
+  <form method="post" class="acoes">
+    {% csrf_token %}
+    {{ formulario.non_field_errors }}
+    {{ formulario.indice.as_field_group }}
+    <button type="button" class="secondary outline" data-marcar-todas="questoes">Desmarcar todas</button>
+    {{ formulario.questoes.as_field_group }}
+    <button type="submit" data-espera="Iniciando a rodada">Executar questões selecionadas</button>
+  </form>
+</section>
+<section class="bloco">
+  <div class="overflow-auto">
+    <table>
+      <thead>
+        <tr>
+          <th>Exportar</th>
+          <th>Data</th>
+          <th>Índice</th>
+          <th>Situação</th>
+          <th class="numero">Respostas</th>
+          <th>Avaliação</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for rodada in rodadas %}
+        <tr>
+          <td><input type="checkbox" name="rodada" value="{{ rodada.pk }}" form="form-exportar" aria-label="Exportar a rodada de {{ rodada.criada_em|date:'d/m/Y H:i' }}"{% if rodada.status_avaliacao != "concluida" %} disabled title="Só rodadas avaliadas podem ser exportadas"{% endif %}></td>
+          <td class="data"><a href="{% url 'rodada' rodada.pk %}">{{ rodada.criada_em|date:"d/m/Y H:i" }}</a></td>
+          <td>{{ rodada.indice.nome }}</td>
+          <td><span class="situacao {{ rodada.status }}">{{ rodada.get_status_display }}</span></td>
+          <td class="numero">{{ rodada.feitas }} de {{ rodada.total }}</td>
+          <td>{{ rodada.get_status_avaliacao_display }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6">Nenhuma rodada executada.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}
